@@ -2,7 +2,27 @@
   <div>
     <form action="javascript:">
       <div class="font-bold italic">Upload Files</div>
-      <div>
+      <div class="flex p-2">
+        <input
+          type="radio" name="fileType" id="text"
+          :checked="fileType === 'text'"
+          @change="fileType = 'text'" class="w-[2rem] shrink-0"
+        />
+        <label for="text" class="text-xs w-full"> Text </label>
+        <input
+          type="radio" name="fileType" id="file"
+          :checked="fileType === 'file'"
+          @change="fileType = 'file'" class="w-[2rem] shrink-0"
+        />
+        <label for="file" class="text-xs w-full"> Image or file </label>
+      </div>
+      <custom-editor v-show="fileType === 'text'" @fileChange="handleMdFile" />
+      <div
+        v-show="fileType === 'file'" 
+        tabindex="1" class="focus:border-solid focus:border-emerald-200 border border-dashed border-2 rounded p-4 flex flex-wrap items-center justify-center gap-4"
+        @paste="handlePaste"
+      >
+        <div class="flex-auto w-full text-center text-gray-400">Paste file here 📄</div>
         <label
           for="fileInput"
           class="rounded bg-emerald-200 dark:bg-emerald-800 px-4 py-2 inline-block mt-4 mb-4 cursor-pointer text-sm shadow hover:shadow-xl"
@@ -102,6 +122,18 @@
             />
             <label for="skip_uploading_if_filename_is_the_same" class="text-xs"
               >Skip uploading files with the same name</label
+            >
+          </div>
+          <div class="flex mb-2">
+            <input
+              :disabled="uploading"
+              class="text-xs shrink-0"
+              type="checkbox"
+              id="tempFile"
+              v-model="tempFile"
+            />
+            <label for="tempFile" class="text-xs"
+              >Temporary files, automatically deleted after a period of time</label
             >
           </div>
           <div class="flex mb-2">
@@ -209,7 +241,8 @@
               }"
             ></div>
             <div v-show="editKey === item.key" class="flex">
-              <form action="javascript:" @submit="renameThisFile(item)" class="flex mb-0 w-full">
+              <form action="javascript:" @submit="renameThisFile(item)" class="flex mb-0 w-full items-center">
+                <span v-if="tempFile">temp/</span>
                 <input
                   class="text-xs w-full"
                   type="text"
@@ -239,7 +272,7 @@
               v-show="editKey !== item.key"
               class="inline-block break-all"
               @click="showRenameInput(item.key)"
-              >{{ renameFileWithRandomId ? item.id_key : item.key }}</span
+              >{{tempFile ? 'temp/' : ''}}{{ renameFileWithRandomId ? item.id_key : item.key }}</span
             ><br /><span
               :style="{
                 marginTop: editKey === item.key ? '0' : '0.25rem',
@@ -282,6 +315,7 @@ import axios from 'axios'
 import { useStatusStore } from '../store/status'
 import { nanoid } from 'nanoid'
 import Compressor from 'compressorjs'
+import CustomEditor from './CustomEditor.vue'
 
 let statusStore = useStatusStore()
 
@@ -301,6 +335,8 @@ let realTimeSpeedRecords = ref({})
 let editKey = ref('')
 let renameFileWithRandomId = ref(false)
 let compressImagesBeforeUploading = ref(false)
+const tempFile = ref(false)
+const fileType = ref('text')
 
 let clearUploadedFiles = function () {
   uploadedList.value = []
@@ -632,20 +668,30 @@ const upload = function () {
   })
 }
 
-function handlePaste() {
-  window.addEventListener('paste', (e) => {
-    let files = e.clipboardData.files
-    renameFileWithRandomId.value = true
-    compressImagesBeforeUploading.value = true
-    Array.from(files).forEach((file) => {
-      file.key = file.name
-      // get extension
-      let extension = file.name.split('.').pop()
-      file.id_key = nanoid(16) + '.' + extension
-    })
-
-    fileList.value = [...fileList.value, ...Array.from(files)]
+function handlePaste(e) {
+  let files = e.clipboardData.files
+  renameFileWithRandomId.value = true
+  compressImagesBeforeUploading.value = true
+  tempFile.value = true
+  Array.from(files).forEach((file) => {
+    file.key = file.name
+    // get extension
+    let extension = file.name.split('.').pop()
+    file.id_key = nanoid(16) + '.' + extension
   })
+  fileList.value = [...fileList.value, ...Array.from(files)]
+}
+function handleMdFile(file) {
+  renameFileWithRandomId.value = true
+  compressImagesBeforeUploading.value = true
+  tempFile.value = true
+
+  file.key = file.name
+  // get extension
+  let extension = file.name.split('.').pop()
+  file.id_key = nanoid(16) + '.' + extension
+
+  fileList.value = [...fileList.value, file]
 }
 
 async function abortMpu(data) {
@@ -893,7 +939,7 @@ function uploadFile(file) {
   abortControllerMap.value[file.key] = new AbortController()
   statusMap.value[file.key] = 'uploading'
 
-  let file_key = renameFileWithRandomId.value ? file.id_key : file.key
+  let file_key = `${tempFile ? 'temp/' : ''}${renameFileWithRandomId.value ? file.id_key : file.key}`
 
   let fileName = '/' + formatFileName(file_key)
   if (endPoint[endPoint.length - 1] === '/') {
@@ -1006,5 +1052,5 @@ watch(
   }
 )
 
-handlePaste()
+// window.addEventListener('paste', handlePaste)
 </script>

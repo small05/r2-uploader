@@ -117,10 +117,18 @@
                   class="w-full overflow-hidden text-ellipsis whitespace-nowrap"
                 >
                   <a
+                    class="flex gap-2 items-center"
                     :href="(customDomain ? customDomain : endPoint) + item.key"
                     target="_blank"
                     v-show="!selectMode"
-                  >{{ item.fileName }}</a
+                  >
+                    <div class="h-8">
+                      <span class="text-xl" v-if="isImage(item.fileName)">🖼</span>
+                      <!-- <img class="h-full w-auto" v-if="isImage(item.fileName)" :src="(customDomain ? customDomain : endPoint) + item.key" :alt="item.fileName"> -->
+                      <span class="text-xl" v-else>📄</span>
+                    </div>
+                    <span>{{ item.fileName }}</span>
+                  </a
                   >
                   <label v-show="selectMode" :for="item.key" class="mb-0">{{
                       item.fileName
@@ -532,6 +540,11 @@ let loadData = async function (action) {
     .finally(() => {
       clearSelection()
     })
+}
+
+function isImage(name) {
+  const regex = /\.(jpeg|webp|gif|png|jpg|svg)$/i
+  return regex.test(name)
 }
 
 loadData()
