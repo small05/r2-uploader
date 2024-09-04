@@ -73,7 +73,7 @@ onMounted(() => {
 });
 
 function text2Md(text, filename = 'temp.md') {
-  const blob = new Blob([text], {
+  const blob = new Blob(['\ufeff', text], {
     type: "text/plain",
   });
 
