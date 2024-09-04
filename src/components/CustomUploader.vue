@@ -939,7 +939,7 @@ function uploadFile(file) {
   abortControllerMap.value[file.key] = new AbortController()
   statusMap.value[file.key] = 'uploading'
 
-  let file_key = `${tempFile ? 'temp/' : ''}${renameFileWithRandomId.value ? file.id_key : file.key}`
+  let file_key = `${tempFile.value ? 'temp/' : ''}${renameFileWithRandomId.value ? file.id_key : file.key}`
 
   let fileName = '/' + formatFileName(file_key)
   if (endPoint[endPoint.length - 1] === '/') {
