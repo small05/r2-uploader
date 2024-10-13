@@ -12,6 +12,9 @@
     "deploy": "vercel --prod",
     "clean": "rm -rf dist"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "@toast-ui/editor": "^3.2.2",
     "autoprefixer": "^10.4.15",
